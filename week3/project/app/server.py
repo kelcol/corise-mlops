@@ -46,13 +46,15 @@ def shutdown_event():
         f.close()
 
 
-
 @app.post("/predict", response_model=PredictResponse)
 def predict(request: PredictRequest):
     # get model prediction for the input request
     # construct the data to be logged
     # construct response
     start = datetime.datetime.now()
+    if nc == None:
+        startup_event()
+
     preds = nc.predict_proba(request)
     
     sorted_preds = dict(sorted(preds.items(), key=lambda item:item[1], reverse=True))
@@ -78,6 +80,9 @@ def predict(request: PredictRequest):
     # construct the data to be logged
     # construct response
     start = datetime.datetime.now()
+    if nc == None:
+        startup_event()
+    
     preds = nc.predict_proba(request)
     
     sorted_preds = dict(sorted(preds.items(), key=lambda item:item[1], reverse=True))
