@@ -6,7 +6,7 @@ import joblib
 from sentence_transformers import SentenceTransformer
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegressionhttps://github.com/kelcol/corise-mlops/blob/kelcol/week3/project/app/classifier.py
 
 class TransformerFeaturizer(BaseEstimator, TransformerMixin):
     def __init__(self):
@@ -18,10 +18,7 @@ class TransformerFeaturizer(BaseEstimator, TransformerMixin):
 
     #  transformation: return the encoding of the document as returned by the transformer model
     def transform(self, X, y=None):
-        X_t = []
-        for doc in X:
-            X_t.append(self.sentence_transformer_model.encode(doc))
-        return X_t
+        return self.sentence_transformer_model.encode([X])
 
 
 class NewsCategoryClassifier:
