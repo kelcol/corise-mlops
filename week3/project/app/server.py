@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from loguru import logger
 import datetime
+import sys
 
 from classifier import NewsCategoryClassifier
 
@@ -26,7 +27,12 @@ class PredictResponse(BaseModel):
     scores: dict
     label: str
 
-
+class LogRequestResponse(BaseModel):
+    timestamp: str = datetime.datetime.now().strftime("%Y:%m:%d %H:%M:%S")
+    request: dict
+    prediction: dict
+    latency: str
+    
 
 
 @app.on_event("startup")
@@ -48,58 +54,25 @@ def shutdown_event():
 
 @app.post("/predict", response_model=PredictResponse)
 def predict(request: PredictRequest):
-    # get model prediction for the input request
-    # construct the data to be logged
-    # construct response
+
     start = datetime.datetime.now()
     if nc == None:
         startup_event()
 
-    preds = nc.predict_proba(request)
-    
-    sorted_preds = dict(sorted(preds.items(), key=lambda item:item[1], reverse=True))
-    label = list(sorted_preds)[0]    
-    response = PredictResponse(scores=sorted_preds, label=label)
-
-    end = datetime.datetime.now()
-    msg = {}
-    msg['timestamp'] = datetime.datetime.now().strftime("%Y:%m:%d %H:%M:%S")
-    msg['request'] = request.dict()
-    msg['prediction'] = response.dict()    
-    diff = end-start    
-    latency = diff.total_seconds() * 1000
-    msg['latency'] = latency
-    logger.info(msg)
-
-    return response
-
-
-@app.post("/predict_label", response_model=PredictResponse)
-def predict(request: PredictRequest):
     # get model prediction for the input request
+    predictions = nc.run_prediction(request)
+    sorted_predictions = dict(sorted(predictions.items(), key=lambda item:item[1], reverse=True))    
+    label = list(sorted_predictions)[0]
+    
+    end = datetime.datetime.now() 
+    latency = (end-start).total_seconds() * 1000
+
     # construct the data to be logged
+    logger.info(LogRequestResponse(request=request.dict(), prediction=sorted_predictions, latency=latency).json())
+
     # construct response
-    start = datetime.datetime.now()
-    if nc == None:
-        startup_event()
-    
-    preds = nc.predict_proba(request)
-    
-    sorted_preds = dict(sorted(preds.items(), key=lambda item:item[1], reverse=True))
-    label = list(sorted_preds)[0]    
-    response = PredictResponse(scores={}, label=label)
+    return PredictResponse(scores=sorted_predictions, label=label)
 
-    end = datetime.datetime.now()
-    msg = {}
-    msg['timestamp'] = datetime.datetime.now().strftime("%Y:%m:%d %H:%M:%S")
-    msg['request'] = request.dict()
-    msg['prediction'] = response.dict()
-    diff = end-start    
-    latency = diff.total_seconds() * 1000
-    msg['latency'] = latency
-    logger.info(msg)
-
-    return response
 
 @app.get("/")
 def read_root():

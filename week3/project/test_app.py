@@ -1,9 +1,12 @@
 import os
+import json
 from fastapi.testclient import TestClient
-from .app.server import app
+from .app.server import app, PredictResponse
+
 
 os.chdir('app')
 client = TestClient(app)
+
 
 """
 We've built our web application, and containerized it with Docker.
@@ -23,38 +26,52 @@ def test_root():
     [TO BE IMPLEMENTED]
     Test the root ("/") endpoint, which just returns a {"Hello": "World"} json response
     """
-    pass
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.json() == {"Hello": "World"}
 
 
 def test_predict_empty():
-    """
-    [TO BE IMPLEMENTED]
-    Test the "/predict" endpoint, with an empty request body
-    """
-    pass
+    response = client.post(
+        "/predict/",
+        json={}
+    )
+    print(response)
+    assert response.status_code == 422 # Unprocessable entity    
 
 
 def test_predict_en_lang():
-    """
-    [TO BE IMPLEMENTED]
-    Test the "/predict" endpoint, with an input text in English (you can use one of the test cases provided in README.md)
-    """
-    pass
+    with open('../data/en_requests.json') as f:
+        en_sample = json.loads(f.readline())
+    response = client.post(
+        "/predict/",
+        json=en_sample
+    )
+
+    assert response.json()['label'] == "Entertainment"
+    assert response.status_code == 200
 
 
 def test_predict_es_lang():
-    """
-    [TO BE IMPLEMENTED]
-    Test the "/predict" endpoint, with an input text in Spanish. 
-    Does the tokenizer and classifier handle this case correctly? Does it return an error?
-    """
-    pass
+    with open('../data/es_requests.json') as f:
+        es_sample = json.loads(f.readline())
+    response = client.post(
+        "/predict/",
+        json=es_sample
+    )
+
+    assert response.json()['label'] == "Entertainment"
+    assert response.status_code == 200
 
 
 def test_predict_non_ascii():
-    """
-    [TO BE IMPLEMENTED]
-    Test the "/predict" endpoint, with an input text that has non-ASCII characters. 
-    Does the tokenizer and classifier handle this case correctly? Does it return an error?
-    """
-    pass
+    with open('../data/th_requests.json') as f:
+        th_sample = json.loads(f.readline())
+    response = client.post(
+        "/predict/",
+        json=th_sample
+    )
+
+    assert response.json()['label'] == "Entertainment"
+    assert response.status_code == 200
+

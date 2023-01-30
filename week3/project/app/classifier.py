@@ -8,7 +8,6 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
 
-
 class TransformerFeaturizer(BaseEstimator, TransformerMixin):
     def __init__(self):
         self.sentence_transformer_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
@@ -58,12 +57,20 @@ class NewsCategoryClassifier:
         self.pipeline = joblib.load(model_path)
         self.classes = self.pipeline['classifier'].classes_
 
-    def predict_proba(self, model_input: dict) -> dict:
-        results = {}
-        for label, proba in zip(self.classes, self.pipeline.predict_proba(model_input.description)[0]):
-            results[label] = proba
+    def run_prediction(self, model_input: dict) -> dict:
+        results = {}       
+
+        classes = self.classes.tolist()
+        print(f"\n\t{classes=}")
+
+        probabilities = self.pipeline.predict_proba([model_input.description])[0].tolist()
+        print(f"\n\t{probabilities=}")
+
+        for label, proba in zip(classes, probabilities):
+            print(f"\n\t{label=}: {proba=}\n")
+            results[label] = proba            
+
         return results
-        
 
     def predict_label(self, model_input: dict) -> str:
         """
